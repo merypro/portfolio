@@ -1,0 +1,80 @@
+# Pixel Dash - Simple
+# Author: Mahri Akmuradova
+
+import pygame
+import random
+
+pygame.init()
+WIDTH, HEIGHT = 600, 800
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Pixel Dash")
+
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+
+clock = pygame.time.Clock()
+FPS = 60
+
+player_size = 50
+player = pygame.Rect(WIDTH//2 - player_size//2, HEIGHT - 100, player_size, player_size)
+player_speed = 5
+
+obstacle_width = 50
+obstacle_height = 50
+obstacle_speed = 5
+obstacles = []
+
+score = 0
+font = pygame.font.SysFont(None, 36)
+
+def draw_text(text, font, color, surface, x, y):
+    text_obj = font.render(text, True, color)
+    text_rect = text_obj.get_rect()
+    text_rect.topleft = (x, y)
+    surface.blit(text_obj, text_rect)
+
+def spawn_obstacle():
+    x = random.randint(0, WIDTH - obstacle_width)
+    y = -obstacle_height
+    obstacles.append(pygame.Rect(x, y, obstacle_width, obstacle_height))
+
+running = True
+spawn_timer = 0
+
+while running:
+    clock.tick(FPS)
+    screen.fill(WHITE)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT] and player.left > 0:
+        player.x -= player_speed
+    if keys[pygame.K_RIGHT] and player.right < WIDTH:
+        player.x += player_speed
+
+    spawn_timer += 1
+    if spawn_timer > 30:
+        spawn_obstacle()
+        spawn_timer = 0
+
+    for obstacle in obstacles[:]:
+        obstacle.y += obstacle_speed
+        if obstacle.top > HEIGHT:
+            obstacles.remove(obstacle)
+            score += 1
+        if player.colliderect(obstacle):
+            running = False
+
+    pygame.draw.rect(screen, BLUE, player)
+    for obstacle in obstacles:
+        pygame.draw.rect(screen, RED, obstacle)
+
+    draw_text(f"Score: {score}", font, BLACK, screen, 10, 10)
+    pygame.display.flip()
+
+pygame.quit()
