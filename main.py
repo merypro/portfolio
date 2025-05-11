@@ -1,4 +1,5 @@
-# Pixel Dash - Simple
+
+# Coin Catcher - Simple Arcade Game
 # Author: Mahri Akmuradova
 
 import pygame
@@ -7,24 +8,26 @@ import random
 pygame.init()
 WIDTH, HEIGHT = 600, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Pixel Dash")
+pygame.display.set_caption("Coin Catcher")
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+YELLOW = (255, 223, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
 clock = pygame.time.Clock()
 FPS = 60
 
-player_size = 50
-player = pygame.Rect(WIDTH//2 - player_size//2, HEIGHT - 100, player_size, player_size)
-player_speed = 5
+player_size = 60
+player = pygame.Rect(WIDTH//2 - player_size//2, HEIGHT - 80, player_size, player_size)
+player_speed = 7
 
-obstacle_width = 50
-obstacle_height = 50
-obstacle_speed = 5
-obstacles = []
+item_width, item_height = 40, 40
+coin_speed = 4
+bomb_speed = 6
+coins = []
+bombs = []
 
 score = 0
 font = pygame.font.SysFont(None, 36)
@@ -35,10 +38,13 @@ def draw_text(text, font, color, surface, x, y):
     text_rect.topleft = (x, y)
     surface.blit(text_obj, text_rect)
 
-def spawn_obstacle():
-    x = random.randint(0, WIDTH - obstacle_width)
-    y = -obstacle_height
-    obstacles.append(pygame.Rect(x, y, obstacle_width, obstacle_height))
+def spawn_coin():
+    x = random.randint(0, WIDTH - item_width)
+    coins.append(pygame.Rect(x, -item_height, item_width, item_height))
+
+def spawn_bomb():
+    x = random.randint(0, WIDTH - item_width)
+    bombs.append(pygame.Rect(x, -item_height, item_width, item_height))
 
 running = True
 spawn_timer = 0
@@ -58,21 +64,31 @@ while running:
         player.x += player_speed
 
     spawn_timer += 1
-    if spawn_timer > 30:
-        spawn_obstacle()
-        spawn_timer = 0
+    if spawn_timer % 40 == 0:
+        spawn_coin()
+    if spawn_timer % 90 == 0:
+        spawn_bomb()
 
-    for obstacle in obstacles[:]:
-        obstacle.y += obstacle_speed
-        if obstacle.top > HEIGHT:
-            obstacles.remove(obstacle)
+    for coin in coins[:]:
+        coin.y += coin_speed
+        if coin.top > HEIGHT:
+            coins.remove(coin)
+        elif player.colliderect(coin):
             score += 1
-        if player.colliderect(obstacle):
+            coins.remove(coin)
+
+    for bomb in bombs[:]:
+        bomb.y += bomb_speed
+        if bomb.top > HEIGHT:
+            bombs.remove(bomb)
+        elif player.colliderect(bomb):
             running = False
 
     pygame.draw.rect(screen, BLUE, player)
-    for obstacle in obstacles:
-        pygame.draw.rect(screen, RED, obstacle)
+    for coin in coins:
+        pygame.draw.ellipse(screen, YELLOW, coin)
+    for bomb in bombs:
+        pygame.draw.ellipse(screen, RED, bomb)
 
     draw_text(f"Score: {score}", font, BLACK, screen, 10, 10)
     pygame.display.flip()
