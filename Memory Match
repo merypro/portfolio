@@ -1,0 +1,84 @@
+import pygame
+import random
+import time
+
+pygame.init()
+WIDTH, HEIGHT = 600, 600
+ROWS, COLS = 4, 4
+TILE_SIZE = WIDTH // COLS
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Memory Match")
+
+WHITE = (255, 255, 255)
+GRAY = (200, 200, 200)
+BLUE = (50, 100, 255)
+GREEN = (0, 200, 0)
+BLACK = (0, 0, 0)
+
+font = pygame.font.SysFont(None, 48)
+
+# Create pairs and shuffle
+values = list(range(1, (ROWS * COLS // 2) + 1)) * 2
+random.shuffle(values)
+tiles = [{'value': v, 'revealed': False} for v in values]
+
+first = None
+second = None
+matched = 0
+start_time = time.time()
+
+running = True
+while running:
+    screen.fill(WHITE)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        elif event.type == pygame.MOUSEBUTTONDOWN and not second:
+            x, y = event.pos
+            col, row = x // TILE_SIZE, y // TILE_SIZE
+            index = row * COLS + col
+            if not tiles[index]['revealed']:
+                tiles[index]['revealed'] = True
+                if not first:
+                    first = index
+                else:
+                    second = index
+
+    # Draw tiles
+    for i, tile in enumerate(tiles):
+        col = i % COLS
+        row = i // COLS
+        rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+        pygame.draw.rect(screen, GRAY if not tile['revealed'] else GREEN, rect)
+        pygame.draw.rect(screen, BLACK, rect, 2)
+
+        if tile['revealed']:
+            text = font.render(str(tile['value']), True, BLACK)
+            text_rect = text.get_rect(center=rect.center)
+            screen.blit(text, text_rect)
+
+    # Check for match
+    if first is not None and second is not None:
+        if tiles[first]['value'] != tiles[second]['value']:
+            pygame.display.flip()
+            pygame.time.wait(800)
+            tiles[first]['revealed'] = False
+            tiles[second]['revealed'] = False
+        else:
+            matched += 2
+        first = None
+        second = None
+
+    # Check for win
+    if matched == len(tiles):
+        elapsed = int(time.time() - start_time)
+        win_text = font.render(f"You Win! Time: {elapsed}s", True, BLUE)
+        screen.blit(win_text, win_text.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
+
+    pygame.display.flip()
+    pygame.time.Clock().tick(30)
+
+pygame.quit()
